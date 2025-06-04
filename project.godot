@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Self Parking Car"
+config/name="Self Parking Car V2"
 run/main_scene="uid://b74vckdv23w66"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"

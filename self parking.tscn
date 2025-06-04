@@ -1,9 +1,9 @@
 [gd_scene load_steps=7 format=3 uid="uid://b74vckdv23w66"]
 
-[ext_resource type="PackedScene" uid="uid://b7t6dj4wkj7k8" path="res://parking_spot.glb" id="1_56jmv"]
-[ext_resource type="Script" uid="uid://dovkyp2qsddc8" path="res://park_controller.gd" id="3_4yk6a"]
-[ext_resource type="PackedScene" uid="uid://deb506c4j03ao" path="res://car.glb" id="3_arn13"]
+[ext_resource type="PackedScene" uid="uid://toylyl8o2iaq" path="res://parking_spot.glb" id="1_56jmv"]
+[ext_resource type="PackedScene" uid="uid://c55jvfojxm0if" path="res://car.glb" id="3_arn13"]
 [ext_resource type="Script" uid="uid://c0steb2d6si3m" path="res://Setup_controller.gd" id="4_4yk6a"]
+[ext_resource type="Script" uid="uid://sbbuu58ltlv4" path="res://CarMain.gd" id="4_gu2oy"]
 [ext_resource type="Script" uid="uid://cuxpmtshtg745" path="res://debug_draw.gd" id="5_gu2oy"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_0it1t"]
@@ -24,7 +24,7 @@ mesh = SubResource("QuadMesh_0it1t")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 
 [node name="Car" parent="." node_paths=PackedStringArray("park") instance=ExtResource("3_arn13")]
-script = ExtResource("3_4yk6a")
+script = ExtResource("4_gu2oy")
 park = NodePath("../Parking Spot")
 
 [node name="Enviroment" type="Node3D" parent="."]

@@ -22,9 +22,6 @@ func _init(path_length: float, max_vel: float, acc: float, decel: float) -> void
 	self.decel_distance = 0.5 * pow(max_vel, 2) / decel
 
 func evaluate(delta_t: float) -> void: 
-	#print(curr_phase, ", ", decel_distance)
-	print(delta_t)
-	
 	#ACCELERATION PHASE
 	if self.curr_phase == VirtualRobot.motion_phase.ACCEL:
 		self.curr_position = self.curr_position + (self.curr_vel * delta_t) + (self.acc * pow(delta_t, 2) * 0.5)

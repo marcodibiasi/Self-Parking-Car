@@ -1,27 +1,40 @@
+extends Node
 class_name LinearPID
 
-var Kp := 1.0
-var Ki := 0.0
-var Kd := 0.0
+# PID gains
+var kp: float
+var ki: float
+var kd: float
 
-var integral := 0.0
-var prev_error := 0.0
+# Internal state
+var integrator: float = 0.0
+var prev_error: float = 0.0
+var saturation: float = INF  # Max allowed velocity output
 
-func _init(kp: float, ki: float, kd: float) -> void:
-	self.Kp = kp
-	self.Ki = ki
-	self.Kd = kd
+func _init(_kp: float, _ki: float, _kd: float, _sat: float = INF) -> void:
+	kp = _kp
+	ki = _ki
+	kd = _kd
+	saturation = _sat
 
-func reset():
-	self.integral = 0.0
-	self.prev_error = 0.0
+func evaluate(delta_t: float, position_error: float) -> float:
+	if delta_t <= 0.0:
+		return 0.0
 
-#rho is the distance from the target given from the polar coordinates
-func evaluate(rho: float, delta_t: float) -> float:
-	var error = rho
-	self.integral += error * delta_t
-	var derivative = (error - self.prev_error) / delta_t if delta_t > 0 else 0.0
-	self.prev_error = error
+	# Accumulo integrale
+	integrator += position_error * delta_t
 
-	var v_command = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
-	return v_command
+	# Derivata
+	var derivative = (position_error - prev_error) / delta_t
+	prev_error = position_error
+
+	# Output: una velocità target
+	var output = kp * position_error + ki * integrator + kd * derivative
+
+	# Saturazione della velocità
+	output = clamp(output, -saturation, saturation)
+	return output
+
+func reset() -> void:
+	integrator = 0.0
+	prev_error = 0.0
