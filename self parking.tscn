@@ -1,12 +1,17 @@
-[gd_scene load_steps=7 format=3 uid="uid://b74vckdv23w66"]
+[gd_scene load_steps=9 format=3 uid="uid://b74vckdv23w66"]
 
 [ext_resource type="PackedScene" uid="uid://toylyl8o2iaq" path="res://parking_spot.glb" id="1_56jmv"]
+[ext_resource type="Texture2D" uid="uid://vkgqp0h3tyov" path="res://pebbled_asphalt_albedo.png" id="2_nko0f"]
 [ext_resource type="PackedScene" uid="uid://c55jvfojxm0if" path="res://car.glb" id="3_arn13"]
 [ext_resource type="Script" uid="uid://c0steb2d6si3m" path="res://Setup_controller.gd" id="4_4yk6a"]
 [ext_resource type="Script" uid="uid://sbbuu58ltlv4" path="res://CarMain.gd" id="4_gu2oy"]
 [ext_resource type="Script" uid="uid://cuxpmtshtg745" path="res://debug_draw.gd" id="5_gu2oy"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_0it1t"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nko0f"]
+albedo_texture = ExtResource("2_nko0f")
+uv1_scale = Vector3(2.3, 2.3, 2.3)
 
 [node name="Scene" type="Node3D"]
 
@@ -19,6 +24,7 @@ field_size = 50
 [node name="Surface" type="MeshInstance3D" parent="."]
 transform = Transform3D(50, 0, 0, 0, -2.18557e-06, 50, 0, -50, -2.18557e-06, 0, 0, 0)
 mesh = SubResource("QuadMesh_0it1t")
+surface_material_override/0 = SubResource("StandardMaterial3D_nko0f")
 
 [node name="Parking Spot" parent="." instance=ExtResource("1_56jmv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
@@ -27,13 +33,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 script = ExtResource("4_gu2oy")
 park = NodePath("../Parking Spot")
 
+[node name="Camera3D" type="Camera3D" parent="Car"]
+transform = Transform3D(1, 0, 0, 0, 0.470873, 0.882201, 0, -0.882201, 0.470873, 0, 11.5167, 10.9453)
+
 [node name="Enviroment" type="Node3D" parent="."]
 
 [node name="Light" type="DirectionalLight3D" parent="Enviroment"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 20, 0)
 
-[node name="Camera3D" type="Camera3D" parent="Enviroment"]
-transform = Transform3D(1, 0, 0, 0, 0.470873, 0.882201, 0, -0.882201, 0.470873, 0, 11.5167, 10.9453)
-
 [node name="Target" type="MeshInstance3D" parent="."]
+layers = 3
 script = ExtResource("5_gu2oy")

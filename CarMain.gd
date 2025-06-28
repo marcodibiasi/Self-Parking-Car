@@ -14,69 +14,117 @@ var virtualRobot: StraightLine2DMotion
 # Target linear speed (m/s)
 var firststep_target = Vector3()
 var cartesianCoordinates = Array()
+var aligning_to_final_angle := false
+
+
+# Variabili per debug
+var v = 0.0
+var w = 0.0
+var steeringAngle = 0.0
 
 func _ready() -> void:
 	# Instantiate vehicle and controller
 	vehicle = AckermannVehicle.new(50.0, 0.97, 0.2, 1.0)
-	LinearSpeedPid = LinearSpeedPID.new(4.0, 0.5, 0.2, 5.0)     # Guida fluida e reattiva, poco overshoot
-	AngularPid = AngularPID.new(1.5, 0.0, 0.05)                 # Sterzo più morbido, meno oscillazione
-	LinearPid = LinearPID.new(1.0, 0.0, 0.1)                    # Distanza -> velocità target più reattiva
-	virtualRobot = StraightLine2DMotion.new(1.0, 0.5, 0.7)
+	LinearSpeedPid = LinearSpeedPID.new(7.0, 0.0, 0.2, 5.0)
+	AngularPid = AngularPID.new(0.5, 0.0, 0.05)
+	LinearPid = LinearPID.new(1.0, 0.0, 0.1)
+	virtualRobot = StraightLine2DMotion.new(2.0, 0.5, 0.3, park.rotation.y)
 
-	
+	# Calcola il target iniziale
 	firststep_target = _calculate_firststep_target(park.position, park.rotation.y)
 	
+	# Avvia il movimento del robot virtuale
 	virtualRobot.start_motion(self.position, firststep_target)
 	
+	# disegna il target
+	var debug_drawer = get_node("../Target") 
+	debug_drawer.set_target(firststep_target)
+	debug_drawer.draw_target()
+
+
 func _physics_process(delta: float) -> void:
+	# Valuta la posizione desiderata del robot virtuale
 	var desired_pos = virtualRobot.evaluate(delta)
-
-	# Calcola errore distanza e heading dal target
-	var pose = vehicle.get_pose()
+	
 	cartesianCoordinates = _cartesian_2polar(self.position, desired_pos)
-
-	# Controllo PID sulla distanza
+	var is_reverse = cartesianCoordinates[0] < 0.0
+	
+	var distance_to_final_target = self.position.distance_to(firststep_target)
+	
+	
+	if virtualRobot.virtual_robot.curr_phase == virtualRobot.virtual_robot.motion_phase.TARGET:
+		vehicle.evaluate(delta, 0.0, 0.0)
+		return
+		
+	 #--- Controllo della velocità lineare (avanzamento) ---
 	var target_speed = LinearPid.evaluate(delta, cartesianCoordinates[0])
 	var currentSpeed = vehicle.get_speed().x
 	var speed_error = target_speed - currentSpeed
 	var torque = LinearSpeedPid.evaluate(delta, speed_error)
-
-	# Controllo PID sull’orientamento
-	var desired_heading = cartesianCoordinates[1]
-	var heading_error = wrapf(desired_heading - self.rotation.y, -PI, PI)
-	var omegaCorrection = AngularPid.evaluate(delta, heading_error)
-
-	var vx = max(currentSpeed, 0.01)
-	var steeringAngle = atan(vehicle.lateral_wheelbase * omegaCorrection / vx)
 	
-	if virtualRobot.virtual_robot.curr_phase == VirtualRobot.motion_phase.TARGET:
-		torque = 0.0
-		omegaCorrection = 0.0
-
-	# Valuta dinamica veicolo
+	# Calcola l'errore di orientamento rispetto al desired_heading
+	var heading_error = wrapf(cartesianCoordinates[1] - self.rotation.y, -PI, PI)
+	
+	# per la retromarcia
+	if is_reverse:
+		heading_error = -heading_error
+		
+	var omegaCorrection = AngularPid.evaluate(delta, heading_error)
+	
+	#Calcola l'angolo di sterzata per il veicolo Ackermann
+	var vx = max(abs(currentSpeed), 0.01)  # assicura segno positivo
+	#if abs(currentSpeed) < 0.5:
+		#steeringAngle = 0.0
+	#else:
+		#steeringAngle = atan(vehicle.lateral_wheelbase * omegaCorrection / vx)
+		
+	# calcolo e saturazione
+	steeringAngle = atan(vehicle.lateral_wheelbase * omegaCorrection / vx)
+	if steeringAngle > PI/6:
+		steeringAngle = PI/6
+	if steeringAngle < -PI/6:
+		steeringAngle = -PI/6
+		
+	# Valuta la dinamica del veicolo
 	vehicle.evaluate(delta, torque, steeringAngle)
-
+	
 	# Aggiorna posizione simulata
 	var speed = vehicle.get_speed()
-	_update(delta, speed.x, speed.y)
-
-
+	var v_current = speed.x
+	var w_current = speed.y
+	_update(delta, v_current, w_current)
+	
+	# Variabili per debug
+	v = v_current
+	w = w_current
 
 func _update(delta: float, v: float, omega:float) -> void:
-	print(self.position, firststep_target)
-	self.position.x += v * cos(self.rotation.y) * delta
-	self.position.z += v * sin(self.rotation.y) * delta
+	self.position.x += v * sin(self.rotation.y) * delta
+	self.position.z += v * cos(self.rotation.y) * delta
 	self.rotation.y += omega * delta
 
-func _cartesian_2polar(pos: Vector3, target: Vector3) -> Array:
-	var distance = sqrt(pow(target.x - pos.x, 2) + pow(target.z - pos.z, 2))
-	var heading = atan2(target.z - pos.z, target.x - pos.x)
-	
-	return [distance, heading]
-	
+func _calculate_desired_heading(target: Vector3, pos: Vector3) -> float:
+	var delta_x = target.x - pos.x
+	var delta_z = target.z - pos.z
+	return atan2(delta_x, delta_z)
+
 func _calculate_firststep_target(pos: Vector3, r_rad: float) -> Vector3:
-	#First step consist in arriving few meters in front of the parking
-	var target_x = pos.x + sin(r_rad)*firststep_distance
-	var target_z = pos.z + cos(r_rad)*firststep_distance
-	
+	var target_x = pos.x + sin(r_rad) * firststep_distance
+	var target_z = pos.z + cos(r_rad) * firststep_distance
 	return Vector3(target_x, 0, target_z)
+	
+func _cartesian_2polar(pos: Vector3, target: Vector3) -> Array:
+	var delta_x = target.x - pos.x
+	var delta_z = target.z - pos.z
+	var distance = sqrt(delta_x * delta_x + delta_z * delta_z)
+
+	var direction = atan2(delta_x, delta_z)
+	var theta = self.rotation.y
+	var heading_error = wrapf(direction - theta, -PI, PI)
+
+	# Se il target è dietro, attiva la retromarcia
+	if abs(heading_error) > PI / 2:
+		distance *= -1.0
+		direction = wrapf(direction + PI, -PI, PI)
+
+	return [distance, direction]

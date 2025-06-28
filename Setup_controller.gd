@@ -4,14 +4,14 @@ extends Node3D
 @export var park: Node3D
 
 @export var field_size = 25
-@export var lower_bound = -5
-@export var upper_bound = 5
+@export var lower_bound = -12
+@export var upper_bound = 12
 
 func _ready() -> void:
 	car.position = get_non_overlapping_position(field_size + 10, field_size + 10, 4);
 	#field_size + 10 so it doesn't overlap with anything
 	
-	park.position = get_non_overlapping_position(car.position.x, car.position.z, 4);
+	park.position = get_non_overlapping_position(car.position.x, car.position.z, 8);
 	
 	car.rotate_y(deg_to_rad(randf_range(0, 360)))
 	park.rotate_y(deg_to_rad(randf_range(0, 360)))

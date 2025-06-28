@@ -9,12 +9,14 @@ var end_x: float
 var end_z: float
 var heading: float
 var target_distance: float
+var final_rotation: float
 var virtual_robot: VirtualRobot
 
-func _init(max_vel: float, acc: float, decel: float) -> void:
+func _init(max_vel: float, acc: float, decel: float, f_rotation: float) -> void:
 	self.max_vel = max_vel
 	self.acc = acc
 	self.decel = decel
+	self.final_rotation = f_rotation
 
 func start_motion(start: Vector3, end: Vector3) -> void:
 	self.start_x = start.x
@@ -27,7 +29,7 @@ func start_motion(start: Vector3, end: Vector3) -> void:
 	
 	self.heading = atan2(dz, dx)
 	self.target_distance = sqrt(pow(dx, 2) + pow(dz, 2))
-	self.virtual_robot = VirtualRobot.new(self.target_distance, self.max_vel, self.acc, self.decel)
+	self.virtual_robot = VirtualRobot.new(self.target_distance, self.max_vel, self.acc, self.decel, self.final_rotation)
 
 func evaluate(delta_t: float) -> Vector3:
 	self.virtual_robot.evaluate(delta_t)
