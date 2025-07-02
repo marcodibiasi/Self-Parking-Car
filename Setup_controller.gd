@@ -1,20 +1,27 @@
 extends Node3D
+class_name SetupScene
 
 @export var car: Node3D
 @export var park: Node3D
 
-@export var field_size = 25
-@export var lower_bound = -12
-@export var upper_bound = 12
+@export var field_size = 30
+@export var lower_bound = -15
+@export var upper_bound = 15
+
+var path: Array
 
 func _ready() -> void:
-	car.position = get_non_overlapping_position(field_size + 10, field_size + 10, 4);
+	car.position = get_non_overlapping_position(field_size + 10, field_size + 10, 10);
 	#field_size + 10 so it doesn't overlap with anything
 	
-	park.position = get_non_overlapping_position(car.position.x, car.position.z, 8);
+	park.position = get_non_overlapping_position(car.position.x, car.position.z, 10);
 	
 	car.rotate_y(deg_to_rad(randf_range(0, 360)))
 	park.rotate_y(deg_to_rad(randf_range(0, 360)))
+	
+	var firststep_target = _calculate_firststep_target(park.position, park.rotation.y)
+	path = get_bezier_trajectory(car.position, firststep_target, car.rotation.y, park.rotation.y, 0.6, 4)
+	debug_draw_points(path, 0.2)
 	
 
 func get_non_overlapping_position(x: float, z: float, margin: float) -> Vector3: 
@@ -35,3 +42,62 @@ func _get_correct_spacing(n: float, new_n: float, margin: float) -> float:
 		new_n = randf_range(lower_bound, upper_bound)
 	
 	return new_n
+	
+func get_bezier_trajectory(p1: Vector3, p2: Vector3, angle1: float, angle2: float, strenght: float, res: int) -> Array:
+	var trajectory = Array()
+	
+	var distance = p1.distance_to(p2)
+	var curve_strenght = distance * strenght
+	
+	var control1 = p1 + Vector3(sin(angle1), 0, cos(angle1)) * curve_strenght 
+	var control2 = p2 + Vector3(sin(angle2), 0, cos(angle2)) * curve_strenght 
+	
+
+	# Genera punti lungo la curva Bézier cubica
+	for i in range(res + 1):
+		var time_step = i / float(res)
+		var pos = bezier_point(p1, control1, control2, p2, time_step)
+		trajectory.append(pos)
+		
+	return trajectory
+	
+func bezier_point(p1: Vector3, control1: Vector3, control2: Vector3, p2: Vector3, t: float) -> Vector3:
+	var u = 1.0 - t
+	return (
+		u*u*u * p1 +
+		3*u*u*t * control1 +
+		3*u*t*t * control2 +
+		t*t*t * p2
+	)
+
+func _calculate_firststep_target(pos: Vector3, r_rad: float) -> Vector3:
+	var target_x = pos.x + sin(r_rad) * 6.0
+	var target_z = pos.z + cos(r_rad) * 6.0
+	return Vector3(target_x, 0, target_z)
+
+func debug_draw_points(points: Array, size := 0.1, color := Color.RED):
+	var i = 0
+	for point in points:
+		var sphere = MeshInstance3D.new()
+		sphere.mesh = SphereMesh.new()
+		sphere.mesh.radius = size
+		sphere.material_override = StandardMaterial3D.new()
+		sphere.material_override.albedo_color = color
+		sphere.global_position = point
+		add_child(sphere)
+		
+		#if i > 0:
+			#draw_line_immediate(points[i-1], point)
+		#i+=1
+		#
+#func draw_line_immediate(p1: Vector3, p2: Vector3, color: Color = Color.RED):
+	#var mesh = ImmediateMesh.new()
+	#mesh.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+	#mesh.surface_set_color(color)
+	#mesh.surface_add_vertex(p1)
+	#mesh.surface_add_vertex(p2)
+	#mesh.surface_end()
+	#
+	#var mesh_instance = MeshInstance3D.new()
+	#mesh_instance.mesh = mesh
+	#add_child(mesh_instance)

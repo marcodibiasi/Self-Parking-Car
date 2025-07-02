@@ -10,6 +10,8 @@ var LinearSpeedPid: LinearSpeedPID
 var AngularPid: AngularPID
 var LinearPid: LinearPID
 var virtualRobot: StraightLine2DMotion
+var pathFollower: PathFollower
+@onready var setupScene: SetupScene = $"../Scene Manager"
 
 # Target linear speed (m/s)
 var firststep_target = Vector3()
@@ -29,12 +31,17 @@ func _ready() -> void:
 	AngularPid = AngularPID.new(0.5, 0.0, 0.05)
 	LinearPid = LinearPID.new(1.0, 0.0, 0.1)
 	virtualRobot = StraightLine2DMotion.new(2.0, 0.5, 0.3, park.rotation.y)
+	pathFollower = PathFollower.new(2.0, 0.2, 0.3, park.rotation.y)
+	
+	pathFollower.start_path(setupScene.path)
 
 	# Calcola il target iniziale
 	firststep_target = _calculate_firststep_target(park.position, park.rotation.y)
 	
+	print(setupScene.path)
+	
 	# Avvia il movimento del robot virtuale
-	virtualRobot.start_motion(self.position, firststep_target)
+	#virtualRobot.start_motion(self.position, firststep_target)
 	
 	# disegna il target
 	var debug_drawer = get_node("../Target") 
@@ -44,7 +51,8 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	# Valuta la posizione desiderata del robot virtuale
-	var desired_pos = virtualRobot.evaluate(delta)
+	#var desired_pos = virtualRobot.evaluate(delta)
+	var desired_pos = pathFollower.evaluate(delta)
 	
 	cartesianCoordinates = _cartesian_2polar(self.position, desired_pos)
 	var is_reverse = cartesianCoordinates[0] < 0.0
@@ -52,8 +60,12 @@ func _physics_process(delta: float) -> void:
 	var distance_to_final_target = self.position.distance_to(firststep_target)
 	
 	
-	if virtualRobot.virtual_robot.curr_phase == virtualRobot.virtual_robot.motion_phase.TARGET:
+	#if virtualRobot.virtual_robot.curr_phase == virtualRobot.virtual_robot.motion_phase.TARGET:
+		#vehicle.evaluate(delta, 0.0, 0.0)
+		#return
+	if pathFollower.finished:
 		vehicle.evaluate(delta, 0.0, 0.0)
+		print("fine")
 		return
 		
 	 #--- Controllo della velocità lineare (avanzamento) ---
