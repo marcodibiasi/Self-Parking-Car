@@ -22,7 +22,7 @@ func _ready() -> void:
 	park.rotation.y = randf_range(dir_angle - PI / 4, dir_angle + PI / 4)
 	
 	var firststep_target = _calculate_firststep_target(park.position, park.rotation.y)
-	path = get_bezier_trajectory(car.position, firststep_target, car.rotation.y, park.rotation.y, 0.8, 2)
+	path = get_bezier_trajectory(car.position, firststep_target, car.rotation.y, park.rotation.y, 0.6, 2)
 	
 	#debug_draw_points(path, 0.2)
 	
@@ -72,6 +72,10 @@ func get_bezier_trajectory(p1: Vector3, p2: Vector3, angle1: float, angle2: floa
 		var pos = bezier_point(p1, control1, control2, p2, time_step)
 		trajectory.append(pos)
 		
+	#var last_target = Vector3(0, 0, 0)
+	#last_target.x = park.position.x + sin(park.rotation.y) * 1.0
+	#last_target.z = park.position.z + cos(park.rotation.y) * 1.0
+	#trajectory.append(last_target)
 	trajectory.append(park.position)
 	return trajectory
 	
@@ -91,8 +95,8 @@ func angle_diff(a: float, b: float) -> float:
 	return diff - PI
 
 func _calculate_firststep_target(pos: Vector3, r_rad: float) -> Vector3:
-	var target_x = pos.x + sin(r_rad) * 6.0
-	var target_z = pos.z + cos(r_rad) * 6.0
+	var target_x = pos.x + sin(r_rad) * 7.0
+	var target_z = pos.z + cos(r_rad) * 7.0
 	return Vector3(target_x, 0, target_z)
 
 func debug_draw_points(points: Array, size := 0.1, color := Color.RED):

@@ -34,7 +34,7 @@ script = ExtResource("4_gu2oy")
 park = NodePath("../Parking Spot")
 
 [node name="Camera3D" type="Camera3D" parent="Car"]
-transform = Transform3D(1, 0, 0, 0, 0.470873, 0.882201, 0, -0.882201, 0.470873, 0, 18.8194, 18.1513)
+transform = Transform3D(1, 0, 0, 0, 0.470873, 0.882201, 0, -0.882201, 0.470873, 0, 12.4198, 9.5132)
 
 [node name="Enviroment" type="Node3D" parent="."]
 

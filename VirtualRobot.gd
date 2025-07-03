@@ -23,14 +23,6 @@ func _init(path_length: float, max_vel: float, acc: float, decel: float, f_rotat
 	self.curr_phase = VirtualRobot.motion_phase.ACCEL 
 	
 	self.decel_distance = 0.5 * pow(max_vel, 2) / decel
-	var accel_distance = 0.5 * pow(max_vel, 2) / acc
-	var total_needed = accel_distance + decel_distance
-	
-	if path_length < total_needed:
-		self.max_vel = sqrt((2 * acc * decel * path_length) / (acc + decel))
-		self.decel_distance = 0.5 * pow(self.max_vel, 2) / decel
-	
-	self.final_rotation = f_rotation
 
 var prev_phase = self.curr_phase  # Salva la fase precedente
 
@@ -95,7 +87,7 @@ func evaluate(delta_t: float) -> void:
 			#print("➡️ Entrata in fase: DECEL")
 		#VirtualRobot.motion_phase.TARGET:
 			#print("✅ Fase finale: TARGET raggiunto")
-	print(curr_vel)
+	#print(curr_vel)
 
 
 func get_speed() -> float:

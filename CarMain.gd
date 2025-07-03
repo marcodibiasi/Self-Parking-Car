@@ -2,7 +2,7 @@
 extends Node3D
 
 @export var park: Node3D
-@export var firststep_distance = 12.0
+@export var firststep_distance = 7.0
 
 # Include the controller and vehicle logic
 var vehicle: AckermannVehicle
@@ -36,7 +36,7 @@ func _ready() -> void:
 	LinearPid = LinearPID.new(0.6, 0.0, 0.0)
 	
 	#virtualRobot = StraightLine2DMotion.new(2.0, 0.5, 0.3, park.rotation.y)
-	pathFollower = PathFollower.new(1.5, 0.5, 0.5, park.rotation.y)
+	pathFollower = PathFollower.new(1.5, 0.5, 0.3, park.rotation.y)
 	
 	pathFollower.start_path(setupScene.path)
 
@@ -62,16 +62,27 @@ func _physics_process(delta: float) -> void:
 	
 	var distance_to_final_target = self.position.distance_to(firststep_target)
 	
+	if pathFollower.finished:
+		
+		var brake = -vehicle.get_speed().x * 12.0
+		
+		var speed = vehicle.get_speed()
+		var v_current = speed.x
+		var w_current = speed.y
+		
+		if abs(v_current) < 0.01 and abs(w_current) < 0.01:
+			print("Veicolo completamente fermo.")
+			return
+		
+		vehicle.evaluate(delta, brake, 0.0)
+		print(v_current)
+		_update(delta, v_current, w_current)
+		print(v_current)
+		return
 	
 	#if virtualRobot.virtual_robot.curr_phase == virtualRobot.virtual_robot.motion_phase.TARGET:
 		#vehicle.evaluate(delta, 0.0, 0.0)
 		#return
-		
-	if (pathFollower.finished and 
-	pathFollower.virtual_robot.virtual_robot.curr_phase ==
-	virtualRobot.virtual_robot.motion_phase.TARGET):
-		vehicle.evaluate(delta, 0.0, 0.0)
-		return
 		
 	 #--- Controllo della velocità lineare (avanzamento) ---
 	var target_speed = LinearPid.evaluate(delta, cartesianCoordinates[0])
@@ -85,6 +96,8 @@ func _physics_process(delta: float) -> void:
 	# per la retromarcia
 	if is_reverse:
 		heading_error = -heading_error
+		
+	
 		
 	var omegaCorrection = AngularPid.evaluate(delta, heading_error)
 	
@@ -102,18 +115,22 @@ func _physics_process(delta: float) -> void:
 	if steeringAngle < -deg_to_rad(35):
 		steeringAngle = -deg_to_rad(35)
 		
-	# Valuta la dinamica del veicolo
-	vehicle.evaluate(delta, torque, steeringAngle)
-	
 	# Aggiorna posizione simulata
 	var speed = vehicle.get_speed()
 	var v_current = speed.x
 	var w_current = speed.y
+	print(v_current)
+		
+	# Valuta la dinamica del veicolo
+	vehicle.evaluate(delta, torque, steeringAngle)
+	
 	_update(delta, v_current, w_current)
+	
 	
 	# Variabili per debug
 	v = v_current
 	w = w_current
+	print("dentro")
 
 func _update(delta: float, v: float, omega:float) -> void:
 	self.position.x += v * sin(self.rotation.y) * delta
