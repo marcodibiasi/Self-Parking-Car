@@ -21,7 +21,15 @@ func _init(path_length: float, max_vel: float, acc: float, decel: float, f_rotat
 	self.curr_vel = 0
 	self.curr_position = 0
 	self.curr_phase = VirtualRobot.motion_phase.ACCEL 
+	
 	self.decel_distance = 0.5 * pow(max_vel, 2) / decel
+	var accel_distance = 0.5 * pow(max_vel, 2) / acc
+	var total_needed = accel_distance + decel_distance
+	
+	if path_length < total_needed:
+		self.max_vel = sqrt((2 * acc * decel * path_length) / (acc + decel))
+		self.decel_distance = 0.5 * pow(self.max_vel, 2) / decel
+	
 	self.final_rotation = f_rotation
 
 var prev_phase = self.curr_phase  # Salva la fase precedente
@@ -54,33 +62,40 @@ func evaluate(delta_t: float) -> void:
 
 	# DECELERATION PHASE
 	elif self.curr_phase == VirtualRobot.motion_phase.DECEL:
-		self.curr_position += self.curr_vel * delta_t - 0.5 * self.decel * pow(delta_t, 2)
-		var vel = self.curr_vel - self.decel * delta_t
-		if vel >= 0:
-			self.curr_vel = vel
+		var next_pos = self.curr_position + self.curr_vel * delta_t - 0.5 * self.decel * pow(delta_t, 2)
+		var next_vel = self.curr_vel - self.decel * delta_t
 
-		if self.curr_position >= self.path_length:
-			self.curr_vel = 0
+		if next_vel < 0:
+			next_vel = 0
+
+		if next_pos >= self.path_length:
 			self.curr_position = self.path_length
+			self.curr_vel = 0
 			self.curr_phase = VirtualRobot.motion_phase.TARGET
+		else:
+			self.curr_position = next_pos
+			self.curr_vel = next_vel
+
 
 	# TARGET PHASE
 	elif self.curr_phase == VirtualRobot.motion_phase.TARGET:
-		self.curr_vel = 0
+		print("ATTENZIONEEEEEEEE")
+		self.curr_vel = 0.0
 		self.curr_position = self.path_length
 		
 	
 
 	# --- DEBUG: stampa il cambio di fase ---
-	match self.curr_phase:
-		VirtualRobot.motion_phase.ACCEL:
-			print("➡️ Entrata in fase: ACCEL")
-		VirtualRobot.motion_phase.CRUISE:
-			print("➡️ Entrata in fase: CRUISE")
-		VirtualRobot.motion_phase.DECEL:
-			print("➡️ Entrata in fase: DECEL")
-		VirtualRobot.motion_phase.TARGET:
-			print("✅ Fase finale: TARGET raggiunto")
+	#match self.curr_phase:
+		#VirtualRobot.motion_phase.ACCEL:
+			#print("➡️ Entrata in fase: ACCEL")
+		#VirtualRobot.motion_phase.CRUISE:
+			#print("➡️ Entrata in fase: CRUISE")
+		#VirtualRobot.motion_phase.DECEL:
+			#print("➡️ Entrata in fase: DECEL")
+		#VirtualRobot.motion_phase.TARGET:
+			#print("✅ Fase finale: TARGET raggiunto")
+	print(curr_vel)
 
 
 func get_speed() -> float:

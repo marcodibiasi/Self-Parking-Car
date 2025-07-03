@@ -2,7 +2,7 @@
 extends Node3D
 
 @export var park: Node3D
-@export var firststep_distance = 6.0
+@export var firststep_distance = 12.0
 
 # Include the controller and vehicle logic
 var vehicle: AckermannVehicle
@@ -27,18 +27,21 @@ var steeringAngle = 0.0
 func _ready() -> void:
 	# Instantiate vehicle and controller
 	vehicle = AckermannVehicle.new(50.0, 0.97, 0.2, 1.0)
-	LinearSpeedPid = LinearSpeedPID.new(7.0, 0.0, 0.2, 5.0)
-	AngularPid = AngularPID.new(0.5, 0.0, 0.05)
-	LinearPid = LinearPID.new(1.0, 0.0, 0.1)
-	virtualRobot = StraightLine2DMotion.new(2.0, 0.5, 0.3, park.rotation.y)
-	pathFollower = PathFollower.new(2.0, 0.2, 0.3, park.rotation.y)
+	#LinearSpeedPid = LinearSpeedPID.new(2.0, 0.0, 0.55, 3.0)
+	#AngularPid = AngularPID.new(0.5, 0.02, 0.06)
+	#LinearPid = LinearPID.new(1.0, 0.0, 0.05)
+	
+	LinearSpeedPid = LinearSpeedPID.new(1.5, 0.0, 0.0, 2.5)
+	AngularPid = AngularPID.new(0.5, 0.0, 0.15)
+	LinearPid = LinearPID.new(0.6, 0.0, 0.0)
+	
+	#virtualRobot = StraightLine2DMotion.new(2.0, 0.5, 0.3, park.rotation.y)
+	pathFollower = PathFollower.new(1.5, 0.5, 0.5, park.rotation.y)
 	
 	pathFollower.start_path(setupScene.path)
 
 	# Calcola il target iniziale
 	firststep_target = _calculate_firststep_target(park.position, park.rotation.y)
-	
-	print(setupScene.path)
 	
 	# Avvia il movimento del robot virtuale
 	#virtualRobot.start_motion(self.position, firststep_target)
@@ -46,7 +49,7 @@ func _ready() -> void:
 	# disegna il target
 	var debug_drawer = get_node("../Target") 
 	debug_drawer.set_target(firststep_target)
-	debug_drawer.draw_target()
+	#debug_drawer.draw_target()
 
 
 func _physics_process(delta: float) -> void:
@@ -63,9 +66,11 @@ func _physics_process(delta: float) -> void:
 	#if virtualRobot.virtual_robot.curr_phase == virtualRobot.virtual_robot.motion_phase.TARGET:
 		#vehicle.evaluate(delta, 0.0, 0.0)
 		#return
-	if pathFollower.finished:
+		
+	if (pathFollower.finished and 
+	pathFollower.virtual_robot.virtual_robot.curr_phase ==
+	virtualRobot.virtual_robot.motion_phase.TARGET):
 		vehicle.evaluate(delta, 0.0, 0.0)
-		print("fine")
 		return
 		
 	 #--- Controllo della velocità lineare (avanzamento) ---
@@ -92,10 +97,10 @@ func _physics_process(delta: float) -> void:
 		
 	# calcolo e saturazione
 	steeringAngle = atan(vehicle.lateral_wheelbase * omegaCorrection / vx)
-	if steeringAngle > PI/6:
-		steeringAngle = PI/6
-	if steeringAngle < -PI/6:
-		steeringAngle = -PI/6
+	if steeringAngle > deg_to_rad(35):
+		steeringAngle = deg_to_rad(35)
+	if steeringAngle < -deg_to_rad(35):
+		steeringAngle = -deg_to_rad(35)
 		
 	# Valuta la dinamica del veicolo
 	vehicle.evaluate(delta, torque, steeringAngle)

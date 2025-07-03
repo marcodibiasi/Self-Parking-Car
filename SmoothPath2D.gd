@@ -39,14 +39,13 @@ func evaluate(delta_t: float) -> Vector3:
 		return path[-1]
 		
 	# aggiorna la posizione virtuale lungo il segmento
-	virtual_robot.evaluate(delta_t)
 	var pos = virtual_robot.evaluate(delta_t)
 	
 	# calcola distanza rimanente nel segmento
 	var dist_to_end = pos.distance_to(segment_end)
 	
 	# Se vicino alla fine segmento, passa al prossimo
-	if dist_to_end < 0.01:
+	if dist_to_end < 0.2 and not finished:
 		current_segment += 1
 		print(current_segment)
 		if current_segment >= path.size() - 1:
@@ -59,6 +58,6 @@ func evaluate(delta_t: float) -> Vector3:
 		segment_start = path[current_segment]
 		segment_end = path[current_segment + 1]
 		virtual_robot.start_motion(segment_start, segment_end)
-		pos = virtual_robot.evaluate(delta_t)
+		#pos = virtual_robot.evaluate(delta_t)
 	
 	return pos
