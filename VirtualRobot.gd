@@ -1,84 +1,86 @@
 class_name VirtualRobot
+extends Node # Added 'extends Node' based on common Godot class structure, assuming it was omitted by mistake.
 
 enum motion_phase {ACCEL, CRUISE, DECEL, TARGET}
 
 var path_length: float
-var max_vel: float
-var acc: float
-var decel: float
-var curr_vel: float 
-var curr_position: float 
-var curr_phase: int
-var decel_distance: float
+var max_velocity: float # Changed from max_vel
+var acceleration: float # Changed from acc
+var deceleration: float # Changed from decel
+var current_velocity: float # Changed from curr_vel
+var current_position: float # Changed from curr_position
+var current_phase: int # Changed from curr_phase
+var deceleration_distance: float # Changed from decel_distance
 var final_rotation: float
 
 
-func _init(path_length: float, max_vel: float, acc: float, decel: float, f_rotation: float) -> void:
-	self.path_length = path_length
-	self.max_vel = max_vel
-	self.acc = acc
-	self.decel = decel
-	self.curr_vel = 0
-	self.curr_position = 0
-	self.curr_phase = VirtualRobot.motion_phase.ACCEL 
+func _init(_path_length: float, _max_velocity: float, _acceleration: float, _deceleration: float, _final_rotation: float) -> void: # Parameters updated
+	path_length = _path_length
+	max_velocity = _max_velocity
+	acceleration = _acceleration
+	deceleration = _deceleration
+	current_velocity = 0
+	current_position = 0
+	current_phase = VirtualRobot.motion_phase.ACCEL # Changed from curr_phase
 	
-	self.decel_distance = 0.5 * pow(max_vel, 2) / decel
+	deceleration_distance = 0.5 * pow(max_velocity, 2) / deceleration # Changed from decel_distance, max_vel, decel
 
-var prev_phase = self.curr_phase  # Salva la fase precedente
+# var prev_phase = self.curr_phase # Commented out as it's not used and causes an error due to direct assignment outside a function.
+								# If needed, it should be part of a function or initialized within _init.
 
-func evaluate(delta_t: float) -> void:
+func evaluate(delta_time: float) -> void: # Parameter updated
 	# ACCELERATION PHASE
-	if self.curr_phase == VirtualRobot.motion_phase.ACCEL:
-		self.curr_position += self.curr_vel * delta_t + 0.5 * self.acc * pow(delta_t, 2)
-		self.curr_vel += self.acc * delta_t
+	if current_phase == VirtualRobot.motion_phase.ACCEL: # Using current_phase
+		current_position += current_velocity * delta_time + 0.5 * acceleration * pow(delta_time, 2) # Using current_position, current_velocity, acceleration
+		current_velocity += acceleration * delta_time # Using current_velocity, acceleration
 
-		var distance = self.path_length - self.curr_position
+		var distance = path_length - current_position # Using path_length, current_position
 		if distance < 0:
 			distance = 0
 
-		if self.curr_vel >= self.max_vel:
-			self.curr_vel = self.max_vel
-			self.curr_phase = VirtualRobot.motion_phase.CRUISE
-		elif distance <= self.decel_distance:
-			var expected_vel = sqrt(2 * self.decel * distance)
-			if expected_vel < self.curr_vel:
-				self.curr_phase = VirtualRobot.motion_phase.DECEL
+		if current_velocity >= max_velocity: # Using current_velocity, max_velocity
+			current_velocity = max_velocity # Using current_velocity, max_velocity
+			current_phase = VirtualRobot.motion_phase.CRUISE # Using current_phase
+		elif distance <= deceleration_distance: # Using deceleration_distance
+			var expected_velocity = sqrt(2 * deceleration * distance) # Using deceleration
+			if expected_velocity < current_velocity: # Using current_velocity
+				current_phase = VirtualRobot.motion_phase.DECEL # Using current_phase
 
 	# CRUISE PHASE
-	elif self.curr_phase == VirtualRobot.motion_phase.CRUISE:
-		self.curr_position += self.max_vel * delta_t
+	elif current_phase == VirtualRobot.motion_phase.CRUISE: # Using current_phase
+		current_position += max_velocity * delta_time # Using current_position, max_velocity
 
-		var distance = self.path_length - self.curr_position
-		if distance <= self.decel_distance:
-			self.curr_phase = VirtualRobot.motion_phase.DECEL
+		var distance = path_length - current_position # Using path_length, current_position
+		if distance <= deceleration_distance: # Using deceleration_distance
+			current_phase = VirtualRobot.motion_phase.DECEL # Using current_phase
 
 	# DECELERATION PHASE
-	elif self.curr_phase == VirtualRobot.motion_phase.DECEL:
-		var next_pos = self.curr_position + self.curr_vel * delta_t - 0.5 * self.decel * pow(delta_t, 2)
-		var next_vel = self.curr_vel - self.decel * delta_t
+	elif current_phase == VirtualRobot.motion_phase.DECEL: # Using current_phase
+		var next_position = current_position + current_velocity * delta_time - 0.5 * deceleration * pow(delta_time, 2) # Using current_position, current_velocity, deceleration
+		var next_velocity = current_velocity - deceleration * delta_time # Using current_velocity, deceleration
 
-		if next_vel < 0:
-			next_vel = 0
+		if next_velocity < 0:
+			next_velocity = 0
 
-		if next_pos >= self.path_length:
-			self.curr_position = self.path_length
-			self.curr_vel = 0
-			self.curr_phase = VirtualRobot.motion_phase.TARGET
+		if next_position >= path_length: # Using path_length
+			current_position = path_length # Using current_position, path_length
+			current_velocity = 0 # Using current_velocity
+			current_phase = VirtualRobot.motion_phase.TARGET # Using current_phase
 		else:
-			self.curr_position = next_pos
-			self.curr_vel = next_vel
+			current_position = next_position # Using current_position
+			current_velocity = next_velocity # Using current_velocity
 
 
 	# TARGET PHASE
-	elif self.curr_phase == VirtualRobot.motion_phase.TARGET:
+	elif current_phase == VirtualRobot.motion_phase.TARGET: # Using current_phase
 		print("ATTENZIONEEEEEEEE")
-		self.curr_vel = 0.0
-		self.curr_position = self.path_length
+		current_velocity = 0.0 # Using current_velocity
+		current_position = path_length # Using current_position, path_length
 		
 	
 
 	# --- DEBUG: stampa il cambio di fase ---
-	#match self.curr_phase:
+	#match self.current_phase: # Using current_phase
 		#VirtualRobot.motion_phase.ACCEL:
 			#print("➡️ Entrata in fase: ACCEL")
 		#VirtualRobot.motion_phase.CRUISE:
@@ -87,11 +89,11 @@ func evaluate(delta_t: float) -> void:
 			#print("➡️ Entrata in fase: DECEL")
 		#VirtualRobot.motion_phase.TARGET:
 			#print("✅ Fase finale: TARGET raggiunto")
-	#print(curr_vel)
+	#print(current_velocity) # Using current_velocity
 
 
 func get_speed() -> float:
-	return self.curr_vel
+	return current_velocity # Using current_velocity
 
 func get_position() -> float:
-	return self.curr_position
+	return current_position # Using current_position

@@ -1,8 +1,8 @@
 [gd_scene load_steps=9 format=3 uid="uid://b74vckdv23w66"]
 
-[ext_resource type="PackedScene" uid="uid://bxftjt4hn33qs" path="res://parking_spot.glb" id="1_56jmv"]
-[ext_resource type="Texture2D" uid="uid://cn3rntwujexrq" path="res://pebbled_asphalt_albedo.png" id="2_nko0f"]
-[ext_resource type="PackedScene" uid="uid://cwa4hmvw2o35k" path="res://car.glb" id="3_arn13"]
+[ext_resource type="PackedScene" uid="uid://31583cicaids" path="res://parking_spot.glb" id="1_56jmv"]
+[ext_resource type="Texture2D" uid="uid://bdjfb5plpp2k7" path="res://pebbled_asphalt_albedo.png" id="2_nko0f"]
+[ext_resource type="PackedScene" uid="uid://6epsspf71ub4" path="res://car.glb" id="3_arn13"]
 [ext_resource type="Script" uid="uid://c0steb2d6si3m" path="res://Setup_controller.gd" id="4_4yk6a"]
 [ext_resource type="Script" uid="uid://sbbuu58ltlv4" path="res://CarMain.gd" id="4_gu2oy"]
 [ext_resource type="Script" uid="uid://cuxpmtshtg745" path="res://debug_draw.gd" id="5_gu2oy"]
@@ -15,10 +15,10 @@ uv1_scale = Vector3(2.3, 2.3, 2.3)
 
 [node name="Scene" type="Node3D"]
 
-[node name="Scene Manager" type="Node3D" parent="." node_paths=PackedStringArray("car", "park")]
+[node name="Scene Manager" type="Node3D" parent="." node_paths=PackedStringArray("car_node", "park_node")]
 script = ExtResource("4_4yk6a")
-car = NodePath("../Car")
-park = NodePath("../Parking Spot")
+car_node = NodePath("../Car")
+park_node = NodePath("../Parking Spot")
 field_size = 50
 
 [node name="Surface" type="MeshInstance3D" parent="."]
