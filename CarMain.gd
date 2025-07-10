@@ -32,38 +32,21 @@ func _ready() -> void:
 	angular_pid = AngularPID.new(0.5, 0.0, 0.15)
 	linear_pid = LinearPID.new(0.6, 0.0, 0.0)
 	
-	#virtual_robot = StraightLine2DMotion.new(2.0, 0.5, 0.3, park.rotation.y)
 	path_follower = PathFollower.new(1.5, 0.5, 0.3, park.rotation.y)
 	
 	path_follower.start_path(setup_scene.path)
 
-	# Calcola il target iniziale
-	first_step_target = _calculate_first_step_target(park.position, park.rotation.y) 
-	
-	# Avvia il movimento del robot virtuale
-	#virtual_robot.start_motion(self.position, first_step_target)
-	
-	# disegna il target
-	var debug_drawer = get_node("../Target")
-	debug_drawer.set_target(first_step_target)
-	#debug_drawer.draw_target()
-
 
 func _physics_process(delta: float) -> void:
 	# Valuta la posizione desiderata del robot virtuale
-	#var desired_pos = virtual_robot.evaluate(delta)
 	var desired_pos = path_follower.evaluate(delta)
 	
 	cartesian_coordinates = _cartesian_to_polar(self.position, desired_pos) 
 	var is_reverse = cartesian_coordinates[0] < 0.0
 	
-	var distance_to_final_target = self.position.distance_to(first_step_target)
-	
 	if path_follower.finished:
-		
-		var brake = -vehicle.get_speed().x * 12.0
-		
 		var speed = vehicle.get_speed()
+		var brake = -speed.x * 12.0
 		var current_linear_speed = speed.x 
 		var current_angular_speed = speed.y 
 		
@@ -72,16 +55,10 @@ func _physics_process(delta: float) -> void:
 			return
 		
 		vehicle.evaluate(delta, brake, 0.0)
-		print(current_linear_speed)
 		_update(delta, current_linear_speed, current_angular_speed) 
-		print(current_linear_speed)
 		return
 	
-	#if virtual_robot.virtual_robot.curr_phase == virtual_robot.virtual_robot.motion_phase.TARGET:
-		#vehicle.evaluate(delta, 0.0, 0.0)
-		#return
-		
-	 #--- Controllo della velocità lineare (avanzamento) ---
+	# Controllo della velocità lineare (avanzamento)
 	var target_speed = linear_pid.evaluate(delta, cartesian_coordinates[0]) 
 	var current_speed = vehicle.get_speed().x 
 	var speed_error = target_speed - current_speed
@@ -93,18 +70,12 @@ func _physics_process(delta: float) -> void:
 	# per la retromarcia
 	if is_reverse:
 		heading_error = -heading_error
-		
 	
-		
 	var omega_correction = angular_pid.evaluate(delta, heading_error) 
 	
 	#Calcola l'angolo di sterzata per il veicolo Ackermann
 	var vx = max(abs(current_speed), 0.01) # Use current_speed
-	#if abs(current_speed) < 0.5:
-		#steering_angle = 0.0
-	#else:
-		#steering_angle = atan(vehicle.lateral_wheelbase * omega_correction / vx)
-		
+	
 	# calcolo e saturazione
 	steering_angle = atan(vehicle.lateral_wheelbase * omega_correction / vx)
 	if steering_angle > deg_to_rad(35):
@@ -116,17 +87,10 @@ func _physics_process(delta: float) -> void:
 	var speed = vehicle.get_speed()
 	var current_linear_speed_for_update = speed.x 
 	var current_angular_speed_for_update = speed.y 
-	print(current_linear_speed_for_update)
 		
 	# Valuta la dinamica del veicolo
 	vehicle.evaluate(delta, torque, steering_angle)
-	
 	_update(delta, current_linear_speed_for_update, current_angular_speed_for_update) 
-	
-	# Variabili per debug
-	current_linear_velocity = current_linear_speed_for_update 
-	current_angular_velocity = current_angular_speed_for_update 
-	print("dentro")
 
 func _update(delta_time: float, linear_vel: float, angular_vel:float) -> void: 
 	self.position.x += linear_vel * sin(self.rotation.y) * delta_time
